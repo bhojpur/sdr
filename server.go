@@ -25,10 +25,6 @@ package main
 
 import (
 	cmd "github.com/bhojpur/sdr/cmd/server"
-
-	_ "github.com/bhojpur/sdr/pkg/webui"
-	_ "github.com/lib/pq"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 func main() {

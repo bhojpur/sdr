@@ -20,38 +20,38 @@ package version
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import (
-	"fmt"
-	"strings"
-)
+// #cgo CFLAGS: -g -Wall
+// #cgo LDFLAGS: -lSoapySDR
+// #include <SoapySDR/Version.h>
+import "C"
 
-var (
-	// Version is the semver release name of this build
-	Version string = "developer"
-	// Commit is the commit hash this build was created from
-	Commit string
-	// Date is the time when this build was created
-	Date string
+// GetABIVersion gets the ABI version string that the library was built against
+//
+// Return the ABI version
+func GetABIVersion() string {
 
-	// GitCommit will be overwritten automatically by the build system
-	BuildTime string
-	// BuildCommit will be overwritten automatically by the build system
-	BuildCommit = "HEAD"
-)
-
-// Print writes the version info to stdout
-func Print() {
-	fmt.Printf("Version:    %s\n", Version)
-	fmt.Printf("Commit:     %s\n", Commit)
-	fmt.Printf("Build Date: %s\n", Date)
+	// Note: The string must not be freed
+	return C.GoString((*C.char)(C.SoapySDR_getABIVersion()))
 }
 
-// FullVersion formats the version to be printed
-func FullVersion() string {
-	return fmt.Sprintf("%s (%s, build %s)", Version, BuildTime, BuildCommit)
+// GetAPIVersion get the SoapySDR library API version as a string. The format of
+// the version string is major.minor.increment
+//
+// Return the API version
+func GetAPIVersion() string {
+
+	// Note: The string must not be freed
+	return C.GoString((*C.char)(C.SoapySDR_getAPIVersion()))
 }
 
-// RC checks if the Bhojpur SDR version is a release candidate or not
-func RC() bool {
-	return strings.Contains(Version, "rc")
+// GetLibVersion gets the library version and build information string. The format
+// of the version string is major.minor.patch-buildInfo. This function is commonly
+// used to identify the software back-end to the user for command-line utilities
+// and graphical applications.
+//
+// Return the library version
+func GetLibVersion() string {
+
+	// Note: The string must not be freed
+	return C.GoString((*C.char)(C.SoapySDR_getAPIVersion()))
 }

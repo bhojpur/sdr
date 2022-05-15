@@ -1,4 +1,4 @@
-package version
+package sdrtime
 
 // Copyright (c) 2018 Bhojpur Consulting Private Limited, India. All rights reserved.
 
@@ -20,38 +20,33 @@ package version
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import (
-	"fmt"
-	"strings"
-)
+// It groups utility functions to convert time and ticks.
 
-var (
-	// Version is the semver release name of this build
-	Version string = "developer"
-	// Commit is the commit hash this build was created from
-	Commit string
-	// Date is the time when this build was created
-	Date string
+// #cgo CFLAGS: -g -Wall
+// #cgo LDFLAGS: -lSoapySDR
+// #include <SoapySDR/Time.h>
+import "C"
 
-	// GitCommit will be overwritten automatically by the build system
-	BuildTime string
-	// BuildCommit will be overwritten automatically by the build system
-	BuildCommit = "HEAD"
-)
+// TicksToTimeNs converts a tick count into a time in nanoseconds using the tick rate.
+//
+// Params:
+//  - ticks: a integer tick count
+//  - rate: the ticks per second
+//
+// Return the time in nanoseconds
+func TicksToTimeNs(ticks int, rate float64) int {
 
-// Print writes the version info to stdout
-func Print() {
-	fmt.Printf("Version:    %s\n", Version)
-	fmt.Printf("Commit:     %s\n", Commit)
-	fmt.Printf("Build Date: %s\n", Date)
+	return int(C.SoapySDR_ticksToTimeNs(C.longlong(ticks), C.double(rate)))
 }
 
-// FullVersion formats the version to be printed
-func FullVersion() string {
-	return fmt.Sprintf("%s (%s, build %s)", Version, BuildTime, BuildCommit)
-}
+// TimeNsToTicks converts a time in nanoseconds into a tick count using the tick rate.
+//
+// Params:
+//  - timeNs: time in nanoseconds
+//  - rate: the ticks per second
+//
+// Return the integer tick count
+func TimeNsToTicks(timeNs int, rate float64) int {
 
-// RC checks if the Bhojpur SDR version is a release candidate or not
-func RC() bool {
-	return strings.Contains(Version, "rc")
+	return int(C.SoapySDR_timeNsToTicks(C.longlong(timeNs), C.double(rate)))
 }

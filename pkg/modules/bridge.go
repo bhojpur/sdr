@@ -1,4 +1,4 @@
-package version
+package modules
 
 // Copyright (c) 2018 Bhojpur Consulting Private Limited, India. All rights reserved.
 
@@ -20,38 +20,39 @@ package version
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import (
-	"fmt"
-	"strings"
-)
+// #include <SoapySDR/Types.h>
+import "C"
+import "unsafe"
 
-var (
-	// Version is the semver release name of this build
-	Version string = "developer"
-	// Commit is the commit hash this build was created from
-	Commit string
-	// Date is the time when this build was created
-	Date string
+// stringArray2Go converts an array of C string to an array of Go String
+func stringArray2Go(strings **C.char, length C.size_t) []string {
 
-	// GitCommit will be overwritten automatically by the build system
-	BuildTime string
-	// BuildCommit will be overwritten automatically by the build system
-	BuildCommit = "HEAD"
-)
+	results := make([]string, int(length))
+	var charPtrTemplate *C.char
 
-// Print writes the version info to stdout
-func Print() {
-	fmt.Printf("Version:    %s\n", Version)
-	fmt.Printf("Commit:     %s\n", Commit)
-	fmt.Printf("Build Date: %s\n", Date)
+	// Read all the strings
+	for i := 0; i < int(length); i++ {
+		val := (**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(strings)) + uintptr(i)*unsafe.Sizeof(charPtrTemplate)))
+		results[i] = C.GoString(*val)
+	}
+
+	return results
 }
 
-// FullVersion formats the version to be printed
-func FullVersion() string {
-	return fmt.Sprintf("%s (%s, build %s)", Version, BuildTime, BuildCommit)
-}
+// args2Go converts a single C Args to Go Arg
+func args2Go(args C.SoapySDRKwargs) map[string]string {
 
-// RC checks if the Bhojpur SDR version is a release candidate or not
-func RC() bool {
-	return strings.Contains(Version, "rc")
+	results := make(map[string]string, args.size)
+
+	keys := (**C.char)(unsafe.Pointer(args.keys))
+	vals := (**C.char)(unsafe.Pointer(args.vals))
+
+	// Read all the strings
+	for i := 0; i < int(args.size); i++ {
+		key := (**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(keys)) + uintptr(i)*unsafe.Sizeof(*keys)))
+		val := (**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(vals)) + uintptr(i)*unsafe.Sizeof(*vals)))
+		results[C.GoString(*key)] = C.GoString(*val)
+	}
+
+	return results
 }

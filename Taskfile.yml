@@ -1,0 +1,98 @@
+version: "3"
+
+vars:
+  GREETING: Hello, Bhojpur SDR Developer!
+
+tasks:
+    default:
+        cmds:
+        - echo "{{.GREETING}}"
+        silent: true
+
+    build-tools:
+        desc: Build the software defined radio tools
+        cmds:
+        - GOFLAGS=-mod=mod go build -o bin/sdrctl ./cmd/client/main.go 
+        - chmod 755 bin/sdrctl
+        - cp bin/sdrctl $GOPATH/bin
+        - GOFLAGS=-mod=mod go build -o bin/sdrsvr ./cmd/server/main.go 
+        - chmod 755 bin/sdrsvr
+        - cp bin/sdrsvr $GOPATH/bin
+
+    build-desktop:
+        desc: Build the desktop application for current OS
+        cmds:
+        - guiutl package -name "Bhojpur SDR" -os macos -icon sdr.png
+        - guiutl package -name "Bhojpur SDR" -os linux -icon sdr.png
+        - guiutl package -name "Bhojpur SDR" -os windows -icon sdr.png
+
+    package-android:
+        desc: Package the mobile application for Android
+        cmds:
+        - guiutl package -name "Bhojpur SDR" -os android -appID net.bhojpur.sdr -icon sdr.png
+
+    package-ios:
+        desc: Package the mobile application for iOS
+        cmds:
+        - guiutl package -name "Bhojpur SDR" -os ios -appID net.bhojpur.sdr -icon sdr.png
+
+    release-macos:
+        desc: Release the native application for macOS App Store
+        cmds:
+        - guiutl release -appID net.bhojpur.sdr -appVersion 1.0 -appBuild 1 -category business
+
+    release-android:
+        desc: Release the mobile application for Google Play
+        cmds:
+        - guiutl release -os android -appID net.bhojpur.sdr -appVersion 1.0 -appBuild 1
+
+    release-ios:
+        desc: Release the mobile application for iOS App Store
+        cmds:
+        - guiutl release -os ios -appID net.bhojpur.sdr -appVersion 1.0 -appBuild 1
+
+    run-web-server:
+        desc: Run the web server application from source code
+        cmds:
+        - GOFLAGS=-mod=mod go run server.go
+ 
+    run-web-client:
+        desc: Run the web client application from source code
+        cmds:
+        - GOFLAGS=-mod=mod go run client.go
+
+    run-mobile:
+        desc: Run the mobile client application on emulator
+        cmds:
+        - GOFLAGS=-mod=mod go run -tags mobile native/main.go
+
+    run-desktop: 
+        desc: Run the desktop application on local host
+        cmds:
+        - GOFLAGS=-mod=mod go run native/main.go
+
+    generate:
+        desc: Generate Go source code from Protocol Buffers
+        cmds:
+        - protoc --proto_path=. --proto_path=$GOPATH/src/googleapis --proto_path=$GOPATH/src/github.com/gogo/protobuf --go_out=./pkg/api --go_opt=module=github.com/bhojpur/sdr/pkg/api pkg/api/v1/radio/radio.proto
+        - protoc --proto_path=. --proto_path=$GOPATH/src/googleapis --proto_path=$GOPATH/src/github.com/gogo/protobuf --go-grpc_out=./pkg/api --go-grpc_opt=module=github.com/bhojpur/sdr/pkg/api pkg/api/v1/radio/radio.proto
+
+    test:
+        desc: Execute all the Unit Tests
+        cmds:
+        - gotestsum --junitfile test-results/unit-tests.xml -- -short -race -cover -coverprofile test-results/cover.out ./...
+
+    swagger.gen:
+        desc: Generate Go source code
+        cmds:
+        - GOFLAGS=-mod=mod go generate bhojpur.net/sdr/internal bhojpur.net/sdr/pkg/swagger
+
+    swagger.validate:
+        desc: Validate all the Swagger API specifications
+        cmds:
+        - swagger validate pkg/swagger/swagger.yml
+
+    swagger.doc:
+        desc: Generate documentation for Swagger specified APIs
+        cmds:
+        - docker run -i yousan/swagger-yaml-to-html < pkg/swagger/swagger.yml > doc/index.html

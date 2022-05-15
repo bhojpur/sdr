@@ -1,0 +1,78 @@
+project_name: sdr
+before:
+  hooks:
+    - go mod tidy
+dist: release
+source:
+  enabled: true
+  name_template: '{{ .ProjectName }}-{{ .Tag }}-source'
+checksum:
+  name_template: '{{ .ProjectName }}-{{ .Tag }}-checksums.txt'
+builds:
+- id: sdrctl
+  env:
+  - CGO_ENABLED=0
+  main: ./cmd/client/main.go
+  binary: sdrctl
+  ldflags:
+  - -s -w
+  - -X "github.com/bhojpur/sdr/pkg/version.Version={{.Version}}-{{.ShortCommit}}"
+  - -X "github.com/bhojpur/sdr/pkg/version.BuildTime={{ time "2006-01-02 15:04:05 MST" }}"
+  - -X "github.com/bhojpur/sdr/pkg/version.BuildCommit={{ .FullCommit }}"
+- id: sdrsvr
+  env:
+  - CGO_ENABLED=0
+  main: ./cmd/server/main.go
+  binary: sdrsvr
+  ldflags:
+  - -s -w
+  - -X "github.com/bhojpur/sdr/pkg/version.Version={{.Version}}-{{.ShortCommit}}"
+  - -X "github.com/bhojpur/sdr/pkg/version.BuildTime={{ time "2006-01-02 15:04:05 MST" }}"
+  - -X "github.com/bhojpur/sdr/pkg/version.BuildCommit={{ .FullCommit }}"
+archives:
+- id: sdrctl
+  files:
+  - "none*"
+  format: binary # this removes the tar of the archives, leaving the binaries alone
+  name_template: sdrctl-{{ .Tag }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    386: i386
+    amd64: x86_64
+  builds:
+  - sdrctl
+- id: sdrsvr
+  files:
+  - "none*"
+  format: binary # this removes the tar of the archives, leaving the binaries alone
+  name_template: sdrsvr-{{ .Tag }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+  builds:
+  - sdrsvr
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    386: i386
+    amd64: x86_64
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  prerelease: auto
+  header: |
+    Bhojpur SDR is a high performance software defined radio engine driving many wireless applications
+    and services running over the Bhojpur.NET Platform.
+dockers:
+  - goos: linux
+    goarch: amd64
+    goarm: ''
+    dockerfile: Dockerfile
+    image_templates:
+    - "ghcr.io/bhojpur/sdr:{{ .Tag }}"
+    extra_files:
+    - README.md
